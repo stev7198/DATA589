@@ -1,0 +1,59 @@
+---
+title: "Project - California Quail in BC - Data Download"
+author: "Tyler Stevenson, Foster Lockerbie, Seamus Riordan-Short"
+date: "`r format(Sys.time(), '%d %B, %Y %H:%M:%OS')`"
+output:
+  #pdf_document: default
+---
+
+```{r setup, include=FALSE}
+# DO NOT ALTER CODE IN THIS CHUNK
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+* * *
+## Loading Required Packages
+
+```{r, message = FALSE}
+#load packages
+library(spatstat)
+library(sf)
+library(rgbif)
+```
+
+## Edit login details
+
+```{r}
+# Set credentials for this session only
+options(gbif_user = "stev7198")
+options(gbif_pwd = "password")
+options(gbif_email = "stev7198@gmail.com")
+```
+
+## Download Occurence Data
+
+```{r}
+occ_download(
+pred("hasGeospatialIssue", FALSE),
+pred("hasCoordinate", TRUE),
+pred("occurrenceStatus","PRESENT"), 
+pred_not(pred_in("basisOfRecord",c("FOSSIL_SPECIMEN","LIVING_SPECIMEN"))),
+pred("country","CA"),
+pred("taxonKey", 5228080),
+format = "SIMPLE_CSV"
+)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

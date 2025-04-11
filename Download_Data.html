@@ -9,10 +9,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Tyler Stevenson" />
+<meta name="author" content="Tyler Stevenson, Foster Lockerbie, Seamus Riordan-Short" />
 
 
-<title>Project - California Quail in BC</title>
+<title>Project - California Quail in BC - Data Download</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -349,9 +349,11 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Project - California Quail in BC</h1>
-<h4 class="author">Tyler Stevenson</h4>
-<h4 class="date">03 April, 2025 12:04:02</h4>
+<h1 class="title toc-ignore">Project - California Quail in BC - Data
+Download</h1>
+<h4 class="author">Tyler Stevenson, Foster Lockerbie, Seamus
+Riordan-Short</h4>
+<h4 class="date">11 April, 2025 15:16:45</h4>
 
 </div>
 
@@ -384,72 +386,26 @@ format = &quot;SIMPLE_CSV&quot;
 )</code></pre>
 <pre><code>## &lt;&lt;gbif download&gt;&gt;
 ##   Your download is being processed by GBIF:
-##   https://www.gbif.org/occurrence/download/0002674-250402121839773
+##   https://www.gbif.org/occurrence/download/0018481-250402121839773
 ##   Most downloads finish within 15 min.
 ##   Check status with
-##   occ_download_wait(&#39;0002674-250402121839773&#39;)
+##   occ_download_wait(&#39;0018481-250402121839773&#39;)
 ##   After it finishes, use
-##   d &lt;- occ_download_get(&#39;0002674-250402121839773&#39;) %&gt;%
+##   d &lt;- occ_download_get(&#39;0018481-250402121839773&#39;) %&gt;%
 ##     occ_download_import()
 ##   to retrieve your download.
 ## Download Info:
 ##   Username: stev7198
 ##   E-mail: stev7198@gmail.com
 ##   Format: SIMPLE_CSV
-##   Download key: 0002674-250402121839773
-##   Created: 2025-04-03T19:04:05.365+00:00
+##   Download key: 0018481-250402121839773
+##   Created: 2025-04-11T22:16:48.772+00:00
 ## Citation Info:  
 ##   Please always cite the download DOI when using this data.
 ##   https://www.gbif.org/citation-guidelines
 ##   DOI: 
 ##   Citation:
-##   GBIF Occurrence Download https://www.gbif.org/occurrence/download/0002674-250402121839773 Accessed from R via rgbif (https://github.com/ropensci/rgbif) on 2025-04-03</code></pre>
-<pre class="r"><code>#occ_download_wait(&#39;0002650-250402121839773&#39;)
-data &lt;- occ_download_get(&#39;0002650-250402121839773&#39;) %&gt;%
-  occ_download_import()</code></pre>
-<pre><code>## Download file size: 12.8 MB</code></pre>
-<pre><code>## On disk at ./0002650-250402121839773.zip</code></pre>
-<pre class="r"><code>data</code></pre>
-<pre><code>## # A tibble: 117,249 × 50
-##        gbifID datasetKey    occurrenceID kingdom phylum class order family genus
-##  *    &lt;int64&gt; &lt;chr&gt;         &lt;chr&gt;        &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;
-##  1  668324297 36f15a36-6b4… 5df56d54-bb… Animal… Chord… Aves  Gall… Odont… Call…
-##  2  668324315 36f15a36-6b4… d5b262f8-ac… Animal… Chord… Aves  Gall… Odont… Call…
-##  3  668324299 36f15a36-6b4… 4aa42fa9-aa… Animal… Chord… Aves  Gall… Odont… Call…
-##  4  668327336 36f15a36-6b4… fd8d287f-ff… Animal… Chord… Aves  Gall… Odont… Call…
-##  5  668324296 36f15a36-6b4… 01539b9a-fd… Animal… Chord… Aves  Gall… Odont… Call…
-##  6  668324298 36f15a36-6b4… e1abc586-ce… Animal… Chord… Aves  Gall… Odont… Call…
-##  7  863376079 4bfac3ea-876… MCZ:Orn:187… Animal… Chord… Aves  Gall… Odont… Call…
-##  8 2762367438 4fa7b334-ce0… URN:catalog… Animal… Chord… Aves  Gall… Odont… Call…
-##  9 1196880456 4fa7b334-ce0… URN:catalog… Animal… Chord… Aves  Gall… Odont… Call…
-## 10 2775627717 4fa7b334-ce0… URN:catalog… Animal… Chord… Aves  Gall… Odont… Call…
-## # ℹ 117,239 more rows
-## # ℹ 41 more variables: species &lt;chr&gt;, infraspecificEpithet &lt;chr&gt;,
-## #   taxonRank &lt;chr&gt;, scientificName &lt;chr&gt;, verbatimScientificName &lt;chr&gt;,
-## #   verbatimScientificNameAuthorship &lt;chr&gt;, countryCode &lt;chr&gt;, locality &lt;chr&gt;,
-## #   stateProvince &lt;chr&gt;, occurrenceStatus &lt;chr&gt;, individualCount &lt;int&gt;,
-## #   publishingOrgKey &lt;chr&gt;, decimalLatitude &lt;dbl&gt;, decimalLongitude &lt;dbl&gt;,
-## #   coordinateUncertaintyInMeters &lt;dbl&gt;, coordinatePrecision &lt;dbl&gt;, …</code></pre>
-<pre class="r"><code># If you&#39;re not sure of the exact name, you can use name_suggest to search
-search_results &lt;- name_suggest(q = &quot;Callipepla californica)&quot;)
-# This returns multiple matches that you can examine
-print(search_results)</code></pre>
-<pre><code>## Records returned [9] 
-## No. unique hierarchies [0] 
-## Args [q=Callipepla californica), limit=100, fields1=key, fields2=canonicalName,
-##      fields3=rank] 
-## # A tibble: 9 × 3
-##       key canonicalName                       rank      
-##     &lt;int&gt; &lt;chr&gt;                               &lt;chr&gt;     
-## 1 5228080 Callipepla californica              SPECIES   
-## 2 5228081 Callipepla californica catalinensis SUBSPECIES
-## 3 6085330 Callipepla californica decolorata   SUBSPECIES
-## 4 5228084 Callipepla californica brunnescens  SUBSPECIES
-## 5 6085339 Callipepla californica plumbea      SUBSPECIES
-## 6 5228082 Callipepla californica canfieldae   SUBSPECIES
-## 7 7191018 Callipepla californica californica  SUBSPECIES
-## 8 5228083 Callipepla californica achrustera   SUBSPECIES
-## 9 6085274 Callipepla californica orecta       SUBSPECIES</code></pre>
+##   GBIF Occurrence Download https://www.gbif.org/occurrence/download/0018481-250402121839773 Accessed from R via rgbif (https://github.com/ropensci/rgbif) on 2025-04-11</code></pre>
 </div>
 
 
