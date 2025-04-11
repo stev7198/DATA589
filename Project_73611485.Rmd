@@ -1,0 +1,149 @@
+---
+title: "Project - California Quail in BC"
+author: "Tyler Stevenson, Foster Lockerbie, Seamus Riordan-Short"
+date: "`r format(Sys.time(), '%d %B, %Y %H:%M:%OS')`"
+output:
+  #pdf_document: default
+---
+
+```{r setup, include=FALSE}
+# DO NOT ALTER CODE IN THIS CHUNK
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+* * *
+## Loading Required Packages
+
+```{r, message = FALSE}
+#load packages
+library(spatstat)
+library(sf)
+library(rgbif)
+```
+
+## Edit login details
+
+```{r}
+# Set credentials for this session only
+options(gbif_user = "stev7198")
+options(gbif_pwd = "password")
+options(gbif_email = "stev7198@gmail.com")
+```
+
+## Download Occurence Data
+
+```{r}
+occ_download(
+pred("hasGeospatialIssue", FALSE),
+pred("hasCoordinate", TRUE),
+pred("occurrenceStatus","PRESENT"), 
+pred_not(pred_in("basisOfRecord",c("FOSSIL_SPECIMEN","LIVING_SPECIMEN"))),
+pred("country","CA"),
+pred("taxonKey", 5228080),
+format = "SIMPLE_CSV"
+)
+```
+
+```{r}
+#occ_download_wait('0002650-250402121839773')
+data <- occ_download_get('0002650-250402121839773') %>%
+  occ_download_import()
+
+data
+```
+
+
+```{r}
+# Filter for only British Columbia records
+bc_quail <- data[data$stateProvince %in% 
+                             c("British Columbia", 
+                               "British Columbia (BC)", 
+                               "British Columbia (Prov.)",
+                               "Bc"), ]
+
+bc_quail
+```
+```{r}
+#Visualise the Parks Element
+plot(bc_quail$decimalLatitude ~ bc_quail$decimalLongitude,
+     pch = 16,
+     col = "#046C9A",
+     data = bc_quail)
+```
+```{r}
+
+
+
+
+#bc_win <- DATA$Window@proj4string@projargs
+
+#target_crs <- st_crs(DATA$Window)
+
+#print(bc_win)
+
+quail_df <- st_as_sf(bc_quail,coords=c("decimalLongitude","decimalLatitude"),crs=4326,remove=FALSE)
+
+window_sf <- st_as_sf(DATA$Window)
+
+#print(quail_df)
+#class(quail_df)
+#st_crs(quail_df)
+
+bc_transformed <- st_transform(quail_df,crs=target_crs)
+
+print(st_crs(bc_transformed))
+
+window_sf <- st_as_sf(DATA$Window)
+
+plot(st_geometry(window_sf))
+plot(st_geometry(bc_transformed),add=TRUE)
+
+
+#parks_ppp <- ppp(x = bc_quail$decimalLongitude, # X coordinates
+                    #y = bc_quail$decimalLatitude, # Y coordinates
+                    #window = bc_win) # Observation window
+```
+```{r}
+load("BC_Covariates.Rda")
+
+#Identify Class of Each Element
+sapply(DATA, class)
+
+# Convert quail data to sf object
+quail_df <- st_as_sf(bc_quail, coords = c("decimalLongitude", "decimalLatitude"), crs = 4326, remove = FALSE)
+
+# Remove duplicated coordinates
+quail_df <- quail_df[!duplicated(st_coordinates(quail_df)), ]
+
+# Convert window to sf
+window_sf <- st_as_sf(DATA$Window)
+
+# Ensure both quail coordinates and the window are in the same CRS
+quail_df <- st_transform(quail_df, crs = st_crs(window_sf))
+
+#Remove Points Outside the Window
+inside_window <- st_intersects(quail_df, window_sf)
+quail_df <- quail_df[sapply(inside_window, length) > 0, ]
+
+# Extract the x and y coordinates of the quail
+quail_coords <- st_coordinates(quail_df)
+
+# Create the ppp object
+quail_ppp <- ppp(x = quail_coords[, 1], y = quail_coords[, 2], window = as.owin(window_sf))
+
+
+plot(quail_ppp)
+```
+
+```{r}
+#Extract elevation information
+elev <- DATA$Elevation
+
+#Estimate Rho
+rho <- rhohat(quail_ppp, elev)
+
+plot(rho)
+```
+
+
