@@ -11,11 +11,11 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+------------------------------------------------------------------------
 
-* * *
 ## Loading Required Packages
 
-```{r, message = FALSE}
+```{r, message = FALSE, cache=TRUE}
 #load packages
 library(spatstat)
 library(sf)
@@ -24,14 +24,13 @@ library(rgbif)
 
 ## Import Data
 
-```{r}
+```{r, cache=TRUE}
 #occ_download_wait('0002650-250402121839773')
 data <- occ_download_get('0002650-250402121839773') %>%
   occ_download_import()
 ```
 
-
-```{r}
+```{r, cache=TRUE}
 # Filter for only British Columbia records
 bc_quail <- data[data$stateProvince %in% 
                              c("British Columbia", 
@@ -41,7 +40,9 @@ bc_quail <- data[data$stateProvince %in%
 
 ```
 
-```{r}
+## Convert Data to PPP
+
+```{r, cache=TRUE}
 load("BC_Covariates.Rda")
 
 #Identify Class of Each Element
@@ -73,14 +74,209 @@ quail_ppp <- ppp(x = quail_coords[, 1], y = quail_coords[, 2], window = as.owin(
 plot(quail_ppp)
 ```
 
-```{r}
-#Extract elevation information
-elev <- DATA$Elevation
+## Determine Homogeneity
 
-#Estimate Rho
-rho <- rhohat(quail_ppp, elev)
+```{r, cache=TRUE}
+# Split into quadrat and count points
+Q <- quadratcount(quail_ppp, nx = 10, ny = 10)
 
-plot(rho)
+#Plot the quadrats and points
+plot(quail_ppp, pch=16,cex=.5, use.marks = F, cols= "blue", main = "Quadrats")
+plot(Q, cex=2, col="red", add=T)
+
+#Plot the intensity
+plot(intensity(Q, image =T), main="Intensity")
+plot(quail_ppp, pch=16, cex=.5, use.marks = F, cols= "white",add=T)
+
+#Quadrat test of homogeneity 
+quadrat.test(Q)
 ```
 
+The small pvalue suggests that there is significant deviation from homogeneity. The quails tend to be clustered in some areas and others have none. The intensity varies in each quadrat suggesting that the intensity is not homogeneous and is spatially varying.
 
+## Plotting Intensity
+
+```{r, cache=TRUE}
+#kernel estimation with likelihood cross validation bandwidth selection
+lambda_u_hat <- density(quail_ppp, sigma = bw.ppl)
+plot(lambda_u_hat, main="Hotspots")
+
+# Estimate R
+R <- bw.ppl(quail_ppp)
+
+#Calculate test statistic
+LR <- scanLRTS(quail_ppp, r = R)
+
+#Plot the output 
+plot(LR)
+plot(as.owin(window_sf),add=T,border="green")
+
+#Compute local p-values
+pvals <- eval.im(pchisq(LR,
+                        df = 1,
+                        lower.tail = FALSE))
+
+
+#Plot the output
+plot(pvals, main = "Local p-values")
+plot(as.owin(window_sf),add=T)
+```
+
+The quail appear to be located in the southern interior and the southern coast of BC.
+
+## Relationship Between Quail
+
+```{r, cache=TRUE}
+#Estimate a strictly positive density
+lambda_pos <- density(quail_ppp, sigma=bw.ppl, positive=TRUE)
+
+#Simulation envelope (with points drawn from the estimated intensity)
+E_inhom <- envelope(quail_ppp,
+                    Kinhom,
+                    simulate = expression(rpoispp(lambda_pos)),
+                    correction="border",
+                    rank = 1,
+                    nsim = 19,
+                    fix.n = TRUE)
+# visualise the results
+plot(E_inhom,
+     main = "",
+     lwd = 2)
+
+# Estimate g corrected for inhomogeneity
+#g_inhom <- pcfinhom(quail_ppp)
+
+#Simulation envelope (with points drawn from the estimated intensity)
+#pcf_inhom <- envelope(quail_ppp,
+                      #pcfinhom,
+                      #simulate = expression(rpoispp(lambda_pos)),
+                      #rank = 1,
+                      #nsim = 19)
+
+# visualise the results
+#plot(pcf_inhom)
+```
+
+There appears to be clustering at lower distances. Which makes sense since quail tend to live in groups called coveys.
+
+## Developing Model
+
+### Covariates
+
+```{r, cache=TRUE}
+#Estimate Rho for elevation
+rho_elev <- rhohat(quail_ppp, DATA$Elevation)
+
+plot(rho_elev,
+     main = "",
+     xlab = "Elevation (m)")
+
+```
+
+There appears to be a strong relationship with quail at lower elevations
+
+```{r,cache=TRUE}
+#Estimate Rho for forest cover
+rho_for <- rhohat(quail_ppp, DATA$Forest)
+
+plot(rho_for,
+     main = "",
+     xlab = "Forest Cover (%)")
+```
+
+There also appears to be a relationship with lower % of forest cover
+
+```{r,cache=TRUE}
+#Estimate Rho for HFI
+rho_hfi <- rhohat(quail_ppp, DATA$HFI)
+
+plot(rho_hfi,
+     main = "",
+     xlab = "HFI")
+```
+
+There appears to be a relationship with higher levels of Human Footprint Index
+
+```{r,cache=TRUE}
+#Estimate Rho for distance to water
+rho_wat <- rhohat(quail_ppp, DATA$Dist_Water)
+
+plot(rho_wat,
+     main = "",
+     xlab = "Distance to Water")
+```
+
+There appears to be a relationship with distance to water. The quail appear to be more present very close to the water.
+
+### Collinearity
+
+```{r,cache=TRUE}
+#Check for collinearity
+cor.im(DATA$Elevation, DATA$Forest, DATA$HFI, DATA$Dist_Water, use = "complete.obs")
+```
+
+There does not appear to be collinearity between the covariates
+
+### Initial Model
+
+Elevation, Forest Cover, HFI all appear to have a non-linear relationship. Distance to Water appears very sporadic but may be captured with linear
+
+```{r,cache=TRUE}
+# initial PPM model
+fit <- ppm(quail_ppp ~ Elevation + I(Elevation^2) + Forest + I(Forest^2) + Dist_Water + HFI + I(HFI^2), data = DATA)
+
+fit
+
+#Fit the null model
+fit_null <- ppm(quail_ppp ~ 1)
+
+fit_null
+
+#AIC values
+AIC(fit); AIC(fit_null)
+
+#Delta AIC
+AIC(fit_null) - AIC(fit)
+
+#Likelihood ratio test
+anova(fit_null, fit, test = "LRT")
+```
+
+The AIC is lower and the likelihood ratio test is significant so the model we defined is a better fit than the null model.
+
+```{r,cache=TRUE}
+#Calculate the partial residuals as a function of elevation
+par_res_elev <- parres(fit, "Elevation")
+
+#Calculate the partial residuals as a function of forest cover
+par_res_for <- parres(fit, "Forest")
+
+#Calculate the partial residuals as a function of HFI
+par_res_hfi <- parres(fit, "HFI")
+
+#Calculate the partial residuals as a function of forest cover
+par_res_wat <- parres(fit, "Dist_Water")
+
+#Side by side plotting
+par(mfrow = c(2,2))
+plot(par_res_elev,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "Elevation (m)")
+plot(par_res_for,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "Forest Cover (%)")
+plot(par_res_hfi,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "HFI")
+plot(par_res_wat,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "Distance to Water")
+```
