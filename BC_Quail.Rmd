@@ -64,7 +64,14 @@ quail_df <- st_transform(quail_df, crs = st_crs(window_sf))
 inside_window <- st_intersects(quail_df, window_sf)
 quail_df <- quail_df[sapply(inside_window, length) > 0, ]
 
+# fill na with 1
+# quail_df$individualCount <- tidyr::replace_na(quail_df$individualCount, 1)
+
+#use uncount to unpack multiple observations
+# quail_df <- quail_df %>% tidyr::uncount(weights = individualCount)
+
 # Extract the x and y coordinates of the quail
+quail_df <- st_as_sf(quail_df, coords = c("decimalLongitude", "decimalLatitude"), crs = st_crs(window_sf), remove = FALSE)
 quail_coords <- st_coordinates(quail_df)
 
 # Create the ppp object
@@ -73,23 +80,32 @@ quail_ppp <- ppp(x = quail_coords[, 1], y = quail_coords[, 2], window = as.owin(
 
 ```{r}
 par(mar = c(0, 0, 0, 0), bg = "#ACB2BE")
-plot(quail_ppp, main = "", pch = 16, cex = 0.4, col = "#EFD8B6", cols = "#543111", opacity = 0.5, background = "red")
+plot(quail_ppp, main = "", pch = 16, cex = 0.4, col = "#543111", cols = adjustcolor("#EFD8B6", alpha.f = 0.3), background = "red")
 ```
 
 ## Determine Homogeneity
 
 ```{r, cache=TRUE}
 # Split into quadrat and count points
-Q <- quadratcount(quail_ppp, nx = 10, ny = 10)
+Q <- quadratcount(quail_ppp, nx = 5, ny = 5)
+```
 
+```{r}
 #Plot the quadrats and points
-plot(quail_ppp, pch=16,cex=.5, use.marks = F, cols= "blue", main = "Quadrats")
-plot(Q, cex=2, col="red", add=T)
+par(mar = c(0, 0, 0, 0), bg = "#ACB2BE")
+plot(quail_ppp, pch=16,cex=.4, use.marks = F, col = "#543111",
+     cols= adjustcolor("#EFD8B6", alpha.f = 0.5), main = "")
+plot(Q, cex=2, col="#8C725A", add=T)
+```
 
+
+```{r}
 #Plot the intensity
 plot(intensity(Q, image =T), main="Intensity")
 plot(quail_ppp, pch=16, cex=.5, use.marks = F, cols= "white",add=T)
+```
 
+```{r}
 #Quadrat test of homogeneity 
 quadrat.test(Q)
 ```
@@ -124,6 +140,14 @@ plot(pvals, main = "Local p-values")
 plot(as.owin(window_sf),add=T)
 ```
 
+```{r, cache=TRUE}
+#kernel estimation with likelihood cross validation bandwidth selection
+par(mar = c(0, 0, 0, 0), bg = "#ACB2BE")
+lambda_u_hat <- density(quail_ppp, sigma = bw.ppl, main = "")
+plot(lambda_u_hat, main="", box = FALSE, col = viridis::inferno)
+```
+
+
 The quail appear to be located in the southern interior and the southern coast of BC.
 
 ## Relationship Between Quail
@@ -157,6 +181,10 @@ plot(E_inhom,
 
 # visualise the results
 #plot(pcf_inhom)
+plot(E_inhom,
+     main = "",
+     lwd = 2,
+     xlim = c(0, 50000))
 ```
 
 There appears to be clustering at lower distances. Which makes sense since quail tend to live in groups called coveys.
@@ -165,14 +193,22 @@ There appears to be clustering at lower distances. Which makes sense since quail
 
 ### Covariates
 
-```{r, cache=TRUE}
+```{r}
 #Estimate Rho for elevation
 rho_elev <- rhohat(quail_ppp, DATA$Elevation)
 
 plot(rho_elev,
      main = "",
-     xlab = "Elevation (m)")
+     xlab = "Elevation (m)",
+     xlim = c(0, 3000))
 
+```
+
+```{r}
+plot(rho_elev,
+     main = "",
+     xlab = "Elevation (m)",
+     xlim = c(0, 1000))
 ```
 
 There appears to be a strong relationship with quail at lower elevations
@@ -285,11 +321,14 @@ plot(par_res_wat,
 
 ```{r}
 #Plot the model predictions
+par(mar = c(0, 0, 0, 0), bg = "#ACB2BE")
 plot(fit,
      se = FALSE,
+     box = FALSE,
      log = TRUE,
      superimpose = FALSE,
-     main = "Estimated Quail intensity",
+     main = "",
+     col = viridis::inferno,
      n= 256)
 
 ```
@@ -426,10 +465,13 @@ anova(fit, fit_cart, test = "LRT")
 
 ```{r}
 #Plot the model predictions
+par(mar = c(0, 0, 0, 0), bg = "#ACB2BE")
 plot(fit_cart,
      se = FALSE,
+     box = FALSE,
      log = TRUE,
      superimpose = FALSE,
-     main = "Estimated Quail intensity",
+     main = "",
+     col = viridis::inferno,
      n= 256)
 ```
