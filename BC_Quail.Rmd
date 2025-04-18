@@ -69,9 +69,11 @@ quail_coords <- st_coordinates(quail_df)
 
 # Create the ppp object
 quail_ppp <- ppp(x = quail_coords[, 1], y = quail_coords[, 2], window = as.owin(window_sf))
+```
 
-
-plot(quail_ppp)
+```{r}
+par(mar = c(0, 0, 0, 0), bg = "#ACB2BE")
+plot(quail_ppp, main = "", pch = 16, cex = 0.4, col = "#EFD8B6", cols = "#543111", opacity = 0.5, background = "red")
 ```
 
 ## Determine Homogeneity
