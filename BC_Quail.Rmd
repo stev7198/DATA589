@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Loading Required Packages
 
-```{r, message = FALSE, cache=TRUE}
+```{r, message = FALSE}
 #load packages
 library(spatstat)
 library(sf)
@@ -279,4 +279,155 @@ plot(par_res_wat,
      lwd = 2,
      main = "",
      xlab = "Distance to Water")
+```
+
+```{r}
+#Plot the model predictions
+plot(fit,
+     se = FALSE,
+     log = TRUE,
+     superimpose = FALSE,
+     main = "Estimated Quail intensity",
+     n= 256)
+
+```
+
+### Model Adjustments with GAMS
+
+```{r}
+library(splines)
+
+#Fit the PPP model
+fit_smooth <- ppm(quail_ppp ~ bs(Elevation,8) + bs(Forest, 8) + bs(HFI, 8)+ Dist_Water, data = DATA, use.gam = TRUE)
+
+fit_smooth
+
+#Calculate the partial residuals as a function of elevation
+par_res_elev <- parres(fit_smooth, "Elevation")
+
+#Calculate the partial residuals as a function of forest cover
+par_res_for <- parres(fit_smooth, "Forest")
+
+#Calculate the partial residuals as a function of HFI
+par_res_hfi <- parres(fit_smooth, "HFI")
+
+#Calculate the partial residuals as a function of forest cover
+par_res_wat <- parres(fit_smooth, "Dist_Water")
+
+#Side by side plotting
+par(mfrow = c(2,2))
+plot(par_res_elev,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "Elevation (m)")
+plot(par_res_for,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "Forest Cover (%)")
+plot(par_res_hfi,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "HFI")
+plot(par_res_wat,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "Distance to Water")
+```
+
+```{r}
+#AIC values
+AIC(fit); AIC(fit_smooth)
+
+#Delta AIC
+AIC(fit) - AIC(fit_smooth)
+
+#Likelihood ratio test
+anova(fit, fit_smooth, test = "LRT")
+```
+
+```{r}
+#Plot the model predictions
+plot(fit_smooth,
+     se = FALSE,
+     log = TRUE,
+     superimpose = FALSE,
+     main = "Estimated Quail intensity",
+     n= 256)
+
+```
+
+### Model Adjustments with Cartesian Coordinates
+
+```{r}
+fit_cart <- ppm(quail_ppp ~ Elevation + I(Elevation^2) + Forest + I(Forest^2) + Dist_Water + HFI + I(HFI^2)+y, data = DATA)
+
+fit_cart
+
+#Calculate the partial residuals as a function of elevation
+par_res_elev <- parres(fit_cart, "Elevation")
+
+#Calculate the partial residuals as a function of forest cover
+par_res_for <- parres(fit_cart, "Forest")
+
+#Calculate the partial residuals as a function of HFI
+par_res_hfi <- parres(fit_cart, "HFI")
+
+#Calculate the partial residuals as a function of forest cover
+par_res_wat <- parres(fit_cart, "Dist_Water")
+
+#Calculate the partial residuals as a function of y
+par_res_y <- parres(fit_cart, "y")
+
+#Side by side plotting
+par(mfrow = c(3,2))
+plot(par_res_elev,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "Elevation (m)")
+plot(par_res_for,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "Forest Cover (%)")
+plot(par_res_hfi,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "HFI")
+plot(par_res_wat,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "Distance to Water")
+plot(par_res_y,
+     legend = FALSE,
+     lwd = 2,
+     main = "",
+     xlab = "Cartesian y")
+```
+
+```{r}
+#AIC values
+AIC(fit); AIC(fit_cart)
+
+#Delta AIC
+AIC(fit) - AIC(fit_cart)
+
+#Likelihood ratio test
+anova(fit, fit_cart, test = "LRT")
+```
+
+```{r}
+#Plot the model predictions
+plot(fit_cart,
+     se = FALSE,
+     log = TRUE,
+     superimpose = FALSE,
+     main = "Estimated Quail intensity",
+     n= 256)
 ```
